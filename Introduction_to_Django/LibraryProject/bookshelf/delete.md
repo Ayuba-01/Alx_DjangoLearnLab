@@ -1,3 +1,3 @@
 from bookshelf.models import Book
 
-Book.delete(title = "1984")
+new_book.delete(title = "1984")

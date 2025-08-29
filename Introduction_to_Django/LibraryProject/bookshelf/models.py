@@ -6,3 +6,9 @@ class Book(models.Model):
     publication_year = models.IntegerField()
     
     
+    @classmethod
+    def create(cls, title, author, publication_year):
+        book = cls(title=title, author=author, publication_year=publication_year)
+        return book
+    
+    

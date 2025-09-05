@@ -63,3 +63,30 @@ def _is_admin(user):
 @user_passes_test(_is_admin, login_url="relationship_app:login")
 def admin_view(request):
     return render(request, "relationship_app/admin_view.html")
+
+
+def _is_member(user):
+    return (
+        user.is_authenticated
+        and hasattr(user, "profile")
+        and user.profile.role == UserProfile.Roles.MEMBER
+    )
+
+@user_passes_test(_is_member, login_url="relationship_app:login")
+def member_view(request):
+    return render(request, "relationship_app/member_view.html")
+
+from django.contrib.auth.decorators import user_passes_test
+from django.shortcuts import render
+from .models import UserProfile
+
+def _is_librarian(user):
+    return (
+        user.is_authenticated
+        and hasattr(user, "profile")
+        and user.profile.role == UserProfile.Roles.LIBRARIAN
+    )
+
+@user_passes_test(_is_librarian, login_url="relationship_app:login")
+def librarian_view(request):
+    return render(request, "relationship_app/librarian_view.html")

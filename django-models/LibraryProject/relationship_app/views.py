@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Book
+from .models import Book, Author
 from .models import Library
 from django.views.generic.detail import DetailView
 from django.contrib.auth.forms import UserCreationForm
@@ -7,6 +7,8 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.contrib.auth import login, authenticate
 from .models import UserProfile
+from django.contrib.auth.decorators import permission_required
+from django.shortcuts import render, redirect, get_object_or_404
 
 def list_books(request):
     books = Book.objects.all()
@@ -90,3 +92,40 @@ def _is_librarian(user):
 @user_passes_test(_is_librarian, login_url="relationship_app:login")
 def librarian_view(request):
     return render(request, "relationship_app/librarian_view.html")
+
+
+@permission_required("relationship_app.can_add_book", raise_exception=True)
+def add_book(request):
+    if request.method == "POST":
+        title = request.POST.get("title")
+        author_id = request.POST.get("author_id")
+        author = get_object_or_404(Author, pk=author_id)
+        Book.objects.create(title=title, author=author)
+        return redirect("relationship_app:list_books") 
+    authors = Author.objects.all()
+    return render(request, "relationship_app/add_book.html", {"authors": authors})
+
+
+@permission_required("relationship_app.can_change_book", raise_exception=True)
+def edit_book(request, pk):
+    book = get_object_or_404(Book, pk=pk)
+    if request.method == "POST":
+        title = request.POST.get("title")
+        author_id = request.POST.get("author_id")
+        if title:
+            book.title = title
+        if author_id:
+            book.author = get_object_or_404(Author, pk=author_id)
+        book.save()
+        return redirect("relationship_app:list_books")
+    authors = Author.objects.all()
+    return render(request, "relationship_app/edit_book.html", {"book": book, "authors": authors})
+
+
+@permission_required("relationship_app.can_delete_book", raise_exception=True)
+def delete_book(request, pk):
+    book = get_object_or_404(Book, pk=pk)
+    if request.method == "POST":
+        book.delete()
+        return redirect("relationship_app:list_books")
+    return render(request, "relationship_app/confirm_delete_book.html", {"book": book})

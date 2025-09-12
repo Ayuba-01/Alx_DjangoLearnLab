@@ -10,8 +10,8 @@ class BookAdmin(admin.ModelAdmin):
 admin.site.register(Book)
 
 
-class UserAdmin(admin.ModelAdmin):
+class CustomUserAdmin(admin.ModelAdmin):
     list_filter = ('date_of_birth', 'email')
     search_fields = ('date_of_birth', 'email')
     
-admin.site.register(CustomUser)
+admin.site.register(CustomUser, CustomUserAdmin)

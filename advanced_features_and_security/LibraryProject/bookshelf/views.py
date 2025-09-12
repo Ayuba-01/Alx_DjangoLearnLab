@@ -49,7 +49,7 @@ def add_book(request):
         title = request.POST.get("title")
         author = request.POST.get("author")
         Book.objects.create(title=title, author=author)
-        return redirect("bookshelf:list_books") 
+        return redirect("bookshelf:book_list") 
     books = Book.objects.all()
     return render(request, "bookshelf/add_book.html", {"authors": books})
 

@@ -7,11 +7,19 @@ class Book(models.Model):
     author = models.CharField(max_length=100)
     publication_year = models.IntegerField()
     
+    class Meta:
+        permissions = [
+            ("can_view", "Can View"), 
+            ("can_create", "Can Create"), 
+            ("can_edit", "Can Edit"),
+            ("can_delete", "Can Delete" )
+        ]
     
     @classmethod
     def create(cls, title, author, publication_year):
         book = cls(title=title, author=author, publication_year=publication_year)
         return book
+    
     
     
 class CustomUserManager(BaseUserManager):

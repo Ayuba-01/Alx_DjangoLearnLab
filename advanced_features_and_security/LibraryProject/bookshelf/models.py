@@ -16,23 +16,26 @@ class Book(models.Model):
     
 class CustomUserManager(BaseUserManager):
     """Manager for custom user model."""
-    def create_user(self, email, date_of_birth, profile_photo, password=None,**extra_fields):
+    def create_user(self, email, password=None,**extra_fields):
         if not email:
             raise ValueError("Users must have an email address")
         email = self.normalize_email(email)
-        user = self.model(email=email, date_of_birth=date_of_birth, **extra_fields)
+        extra_fields.setdefault("username", email)
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self,  email, date_of_birth, password=None,**extra_fields):
+    def create_superuser(self, email, password=None,**extra_fields):
         """Create a superuser with full permissions."""
         user = self.create_user(
             email,
             password=password,
-            date_of_birth=date_of_birth,
+            **extra_fields,
         )
-        user.is_admin = True
+        extra_fields.setdefault("is_admin", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_active", True)
         return user
 
 class CustomUser(AbstractUser):
@@ -41,15 +44,23 @@ class CustomUser(AbstractUser):
         max_length=255,
         unique=True,
     )
-    date_of_birth = models.DateTimeField()
-    profile_photo = models.ImageField()
+    date_of_birth = models.DateTimeField(null=True, blank=True)
+    profile_photo = models.ImageField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
     
     objects = CustomUserManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["date_of_birth"]
+    REQUIRED_FIELDS = []
     
     def __str__(self):
         return self.email
+    
+    class Meta:
+        permissions = [
+            ("can_view", "Can View"), 
+            ("can_create", "Can Create"), 
+            ("can_edit", "Can Edit"),
+            ("can_delete", "Can Delete" )
+        ]

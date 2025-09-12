@@ -35,7 +35,7 @@ class UserManager(BaseUserManager):
         user.is_admin = True
         return user
 
-class CustomeUser(AbstractUser):
+class CustomUser(AbstractUser):
     email = models.EmailField(
         verbose_name="email address",
         max_length=255,

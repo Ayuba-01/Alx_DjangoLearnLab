@@ -14,7 +14,7 @@ class Book(models.Model):
         return book
     
     
-class UserManager(BaseUserManager):
+class CustomUserManager(BaseUserManager):
     """Manager for custom user model."""
     def create_user(self, email, date_of_birth, profile_photo, password=None,**extra_fields):
         if not email:
@@ -46,7 +46,7 @@ class CustomUser(AbstractUser):
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
     
-    objects = UserManager()
+    objects = CustomUserManager()
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["date_of_birth"]

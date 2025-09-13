@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-3h%x63tt2qw+iar0o()q**+45jp)+(@_q&xgu@79zn#n(qrx#)"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
@@ -125,3 +125,7 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "bookshelf.CustomUser"
+
+CSRF_COOKIE_SECURE = True
+
+SESSION_COOKIE_SECURE = True

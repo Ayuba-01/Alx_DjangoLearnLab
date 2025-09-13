@@ -126,6 +126,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "bookshelf.CustomUser"
 
-CSRF_COOKIE_SECURE = True
+if not DEBUG:
+    # Force HTTPS (recommended in prod behind TLS)
+    SECURE_SSL_REDIRECT = True
 
-SESSION_COOKIE_SECURE = True
+    # Browser protections
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = "DENY"
+
+    CSRF_COOKIE_SECURE = True
+
+    SESSION_COOKIE_SECURE = True

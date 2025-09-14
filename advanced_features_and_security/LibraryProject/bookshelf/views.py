@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.core.paginator import Paginator
-from .forms import BookSearchForm
+from .forms import ExampleForm
 from .models import CustomUser, Book
 
 @permission_required("bookshelf.can_create", raise_exception=True)
@@ -83,7 +83,7 @@ def delete_book(request, pk):
 
 
 def search_books(request):
-    form = BookSearchForm(request.GET or None)
+    form = ExampleForm(request.GET or None)
     qs = Book.objects.select_related("author")  # efficient join; still safe
 
     if form.is_valid():

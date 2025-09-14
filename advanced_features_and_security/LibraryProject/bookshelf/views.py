@@ -1,6 +1,9 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render, redirect, get_object_or_404
+from django.db.models import Q
+from django.core.paginator import Paginator
+from .forms import BookSearchForm
 from .models import CustomUser, Book
 
 @permission_required("bookshelf.can_create", raise_exception=True)
@@ -77,3 +80,33 @@ def delete_book(request, pk):
         book.delete()
         return redirect("bookshelf:list_books")
     return render(request, "bookshelf/confirm_delete_book.html", {"book": book})
+
+
+def search_books(request):
+    form = BookSearchForm(request.GET or None)
+    qs = Book.objects.select_related("author")  # efficient join; still safe
+
+    if form.is_valid():
+        q = form.cleaned_data.get("q")
+        author = form.cleaned_data.get("author")
+        order = form.cleaned_data.get("order") or "title"
+
+        if q:
+            qs = qs.filter(Q(title__icontains=q) | Q(author__name__icontains=q))
+        if author:
+            qs = qs.filter(author__name__icontains=author)
+
+        # Whitelist order fields (avoid user-controlled order_by injection)
+        allowed_orders = {"title", "-title", "author__name", "-author__name"}
+        if order in allowed_orders:
+            qs = qs.order_by(order)
+
+    # Pagination also protects you from accidental huge responses
+    paginator = Paginator(qs, 20)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(
+        request,
+        "relationship_app/book_search.html",
+        {"form": form, "page_obj": page_obj},
+    )

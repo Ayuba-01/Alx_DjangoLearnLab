@@ -1,0 +1,23 @@
+<!-- library_detail.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Library Detail</title>
+</head>
+<body>
+    <form method="post">
+        {% csrf_token %}
+        <p>Title: <input name="title" required></p>
+        <p>
+          Author:
+          <select name="author_id" required>
+            {% for a in authors %}
+              <option value="{{ a.id }}">{{ a.name }}</option>
+            {% endfor %}
+          </select>
+        </p>
+        <button type="submit">Save</button>
+      </form>
+</body>
+</html>

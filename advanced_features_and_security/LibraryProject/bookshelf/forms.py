@@ -1,6 +1,6 @@
 from django import forms
 
-class BookSearchForm(forms.Form):
+class ExampleForm(forms.Form):
     q = forms.CharField(label="Search", max_length=100, required=False)
     author = forms.CharField(max_length=100, required=False)
     order = forms.ChoiceField(

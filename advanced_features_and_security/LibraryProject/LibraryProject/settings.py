@@ -126,6 +126,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "bookshelf.CustomUser"
 
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 if not DEBUG:
     # Force HTTPS (recommended in prod behind TLS)
     SECURE_SSL_REDIRECT = True

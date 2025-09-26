@@ -1,3 +1,53 @@
-from django.shortcuts import render
+from rest_framework import generics, permissions
+from .models import Book
+from .serializers import BookSerializer
+from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 
-# Create your views here.
+
+class BookListView(generics.ListAPIView):
+    """
+    GET /books/ — list all books
+    """
+    queryset = Book.objects.select_related('author').all()
+    serializer_class = BookSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class BookDetailView(generics.RetrieveAPIView):
+    """
+    GET /books/<pk>/ — retrieve a single book by ID
+    """
+    queryset = Book.objects.select_related('author').all()
+    serializer_class = BookSerializer
+    permission_classes = [permissions.AllowAny]
+    # lookup_field = 'pk'  # default; only change if your URL uses a different name
+
+
+class BookCreateView(generics.CreateAPIView):
+    """
+    POST /books/ — create a new book
+    """
+    queryset = Book.objects.all()         # optional for CreateAPIView, but safe to include
+    serializer_class = BookSerializer     # uses your validation (e.g., publication_year)
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
+
+
+class BookUpdateView(generics.UpdateAPIView):
+    """
+    PUT/PATCH /books/<pk>/ — update an existing book
+    """
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
+
+
+
+class BookDeleteView(generics.DestroyAPIView):
+    """
+    DELETE /books/<pk>/ — delete a book
+    """
+    queryset = Book.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+    # serializer_class not required for DestroyAPIView

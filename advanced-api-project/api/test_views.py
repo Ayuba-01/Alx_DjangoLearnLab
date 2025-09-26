@@ -21,9 +21,9 @@ class BookAPITests(APITestCase):
 
         url = reverse("book-create")
         payload = {"title": "Silmarillion", "publication_year": 1977, "author": self.a1.id}
-        res = self.client.post(url, payload, format="json")
-        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(res.data["title"], "Silmarillion")
+        response = self.client.post(url, payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["title"], "Silmarillion")
 
         # optional: clean up session for isolation
         self.client.logout()
@@ -33,9 +33,9 @@ class BookAPITests(APITestCase):
         self.assertTrue(self.client.login(username="alice", password="alicepass"))
 
         url = reverse("book-update", args=[book.pk])
-        res = self.client.patch(url, {"title": "Temp Updated"}, format="json")
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        book.refresh_from_db()
+        response = self.client.patch(url, {"title": "Temp Updated"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        book.refresponseh_from_db()
         self.assertEqual(book.title, "Temp Updated")
         self.client.logout()
 
@@ -44,7 +44,7 @@ class BookAPITests(APITestCase):
         self.assertTrue(self.client.login(username="alice", password="alicepass"))
 
         url = reverse("book-delete", args=[book.pk])
-        res = self.client.delete(url)
-        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Book.objects.filter(pk=book.pk).exists())
         self.client.logout()

@@ -15,8 +15,20 @@ class BookListView(generics.ListAPIView):
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [rest_framework.DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['title', 'author_name', 'publication_year']
+    # --- Filtering (structured) ---
+    filterset_fields = {
+        'title': ['exact', 'icontains'],
+        'publication_year': ['exact', 'gte', 'lte'],
+        'author': ['exact'],                 # by author ID: ?author=3
+        'author__name': ['exact', 'icontains'],  # by author name
+    }
+
+    # --- Search (free text across fields) ---
+    search_fields = ['title', 'author__name']    # NOT 'author_name' and not year
+
+    # --- Ordering ---
     ordering_fields = ['title', 'publication_year']
+    ordering = ['title']  # optional default
 
 
 class BookDetailView(generics.RetrieveAPIView):

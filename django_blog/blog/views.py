@@ -1,16 +1,16 @@
 # blog/views.py
 from django.contrib.auth.views import LoginView, LogoutView
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.contrib import messages
 
-from .models import Post
-from .forms import PostForm
+from .models import Post, Comment
+from .forms import PostForm, CommentForm
 
 from .forms import RegisterForm, ProfileForm
 class CustomLoginView(LoginView):
@@ -68,6 +68,14 @@ class PostDetailView(DetailView):
     model = Post
     template_name = "blog/post_detail.html"
     context_object_name = "post"
+    
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # comments for this post (newest first via Comment.Meta.ordering)
+        ctx["comments"] = self.object.comments.select_related("author").all()
+        # empty form for the “Leave a comment” box
+        ctx["comment_form"] = CommentForm()
+        return ctx
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
@@ -104,3 +112,50 @@ class PostDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, "Post deleted.")
         return super().delete(request, *args, **kwargs)
+    
+class CommentCreateView(LoginRequiredMixin, CreateView):
+    model = Comment
+    form_class = CommentForm
+    # No template here; the form lives on the post detail page
+
+    def form_valid(self, form):
+        post = get_object_or_404(Post, pk=self.kwargs["post_id"])
+        form.instance.post = post
+        form.instance.author = self.request.user
+        messages.success(self.request, "Comment posted.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        # Back to the post, jump to comments
+        return reverse("blog:post-detail", kwargs={"pk": self.kwargs["post_id"]}) + "#comments"
+    
+
+class CommentAuthorOnlyMixin(UserPassesTestMixin):
+    """Allow only the comment author to edit/delete."""
+    def test_func(self):
+        obj = self.get_object()
+        return obj.author_id == self.request.user.id
+
+class CommentUpdateView(LoginRequiredMixin, CommentAuthorOnlyMixin, UpdateView):
+    model = Comment
+    form_class = CommentForm
+    template_name = "blog/comment_form.html"
+
+    def form_valid(self, form):
+        messages.success(self.request, "Comment updated.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("blog:post-detail", kwargs={"pk": self.object.post_id}) + f"#comment-{self.object.pk}"
+    
+
+class CommentDeleteView(LoginRequiredMixin, CommentAuthorOnlyMixin, DeleteView):
+    model = Comment
+    template_name = "blog/comment_confirm_delete.html"
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, "Comment deleted.")
+        return super().delete(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse("blog:post-detail", kwargs={"pk": self.object.post_id}) + "#comments"

@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
-from .models import Post
+from .models import Post, Comment
 
 User = get_user_model()
 
@@ -49,5 +49,26 @@ class PostForm(forms.ModelForm):
         }
 
     
-        
-    
+class CommentForm(forms.ModelForm):
+    # Override the default to control label, widget, and max length
+    content = forms.CharField(
+        label="Add a comment",
+        widget=forms.Textarea(attrs={
+            "rows": 3,
+            "placeholder": "Be respectful and stay on topic…",
+        }),
+        max_length=2000,  
+        help_text="Max 2000 characters."
+    )
+
+    class Meta:
+        model = Comment
+        fields = ("content")  
+
+    def clean_content(self):
+        text = (self.cleaned_data.get("content") or "").strip()
+        if not text:
+            raise forms.ValidationError("Comment cannot be empty.")
+        if len(text) < 3:
+            raise forms.ValidationError("Comment is too short.")
+        return text

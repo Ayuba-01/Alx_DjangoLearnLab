@@ -2,9 +2,16 @@
 {% block title %}{{ post.title }} — My Blog{% endblock %}
 
 {% block content %}
-  <article>
+<article>
     <h1>{{ post.title }}</h1>
     <small>by {{ post.author.username }} · {{ post.created_at|date:"M d, Y H:i" }}</small>
+    {% if post.tags.all %}
+      <div class="tags" style="margin:.5rem 0 1rem;">
+        {% for t in post.tags.all %}
+          <a href="{% url 'blog:posts-by-tag' t.slug %}" class="tag">#{{ t.name }}</a>
+        {% endfor %}
+      </div>
+    {% endif %}
     <div class="post-body">
       {{ post.content|linebreaks }}
     </div>

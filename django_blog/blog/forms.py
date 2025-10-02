@@ -40,13 +40,58 @@ class ProfileForm(forms.ModelForm):
         return email
 
 class PostForm(forms.ModelForm):
+    tags_csv = forms.CharField(
+        required=False,
+        label="Tags",
+        help_text="Comma-separated (e.g., django, web, tips)",
+        widget=forms.TextInput(attrs={"placeholder": "django, web, tips"})
+    )
     class Meta:
         model = Post
-        fields = ("title", "content")
+        fields = ("title", "content", "tags_csv")
         widgets = {
             "title": forms.TextInput(attrs={"placeholder": "Post title"}),
             "content": forms.Textarea(attrs={"rows": 10, "placeholder": "Write your post..."}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Prefill when editing
+        if self.instance and self.instance.pk:
+            names = list(self.instance.tags.values_list("name", flat=True))
+            if names:
+                self.fields["tags_csv"].initial = ", ".join(names)
+
+    def _parse_tags(self):
+        raw = (self.cleaned_data.get("tags_csv") or "").strip()
+        if not raw:
+            return []
+        # split on comma, trim blanks, collapse spaces
+        names = [t.strip() for t in raw.split(",") if t.strip()]
+        # de-duplicate, preserve order
+        seen, unique = set(), []
+        for n in names:
+            if n.lower() not in seen:
+                seen.add(n.lower())
+                unique.append(n)
+        return unique
+
+    def save(self, commit=True):
+        post = super().save(commit=commit)
+        # when commit=False on create, ensure we have a PK before setting M2M
+        if not post.pk and commit:
+            post.save()
+        tag_names = self._parse_tags()
+        tag_objs = []
+        for name in tag_names:
+            tag, _ = Tag.objects.get_or_create(name=name)
+            tag_objs.append(tag)
+        # set (replace) the M2M
+        # if post has no pk yet, save first
+        if not post.pk:
+            post.save()
+        post.tags.set(tag_objs)
+        return post
 
     
 class CommentForm(forms.ModelForm):
@@ -63,7 +108,7 @@ class CommentForm(forms.ModelForm):
 
     class Meta:
         model = Comment
-        fields = ("content")  
+        fields = ("content",)  
 
     def clean_content(self):
         text = (self.cleaned_data.get("content") or "").strip()

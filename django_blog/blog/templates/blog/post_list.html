@@ -1,36 +1,32 @@
 {% extends "blog/base.html" %}
 {% block title %}Posts — My Blog{% endblock %}
-
 {% block content %}
-  <h1>All posts</h1>
+  <h1>{{ heading|default:"All posts" }}</h1>
 
-  {% if request.user.is_authenticated %}
-    <p><a href="{% url 'blog:post-create' %}">+ New post</a></p>
-  {% endif %}
+  <form method="get" action="{% url 'blog:post-search' %}" style="margin:.5rem 0 1rem;">
+    <input type="text" name="q" value="{{ search_query|default:'' }}" placeholder="Search posts or tags…">
+    <button type="submit">Search</button>
+  </form>
 
   {% if posts %}
-    <ul class="post-list">
+    <ul class="post-list" style="list-style:none; padding-left:0;">
       {% for post in posts %}
-        <li>
+        <li style="margin:1rem 0; padding-bottom:1rem; border-bottom:1px solid #eee;">
           <h3><a href="{% url 'blog:post-detail' post.pk %}">{{ post.title }}</a></h3>
           <small>by {{ post.author.username }} · {{ post.created_at|date:"M d, Y H:i" }}</small>
           <p>{{ post.content|truncatewords:30 }}</p>
+
+          {% if post.tags.all %}
+            <div class="tags">
+              {% for t in post.tags.all %}
+                <a href="{% url 'blog:posts-by-tag' t.slug %}" class="tag">#{{ t.name }}</a>
+              {% endfor %}
+            </div>
+          {% endif %}
         </li>
       {% endfor %}
     </ul>
-
-    {% if is_paginated %}
-      <nav class="pagination">
-        {% if page_obj.has_previous %}
-          <a href="?page={{ page_obj.previous_page_number }}">Prev</a>
-        {% endif %}
-        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-        {% if page_obj.has_next %}
-          <a href="?page={{ page_obj.next_page_number }}">Next</a>
-        {% endif %}
-      </nav>
-    {% endif %}
   {% else %}
-    <p>No posts yet.</p>
+    <p>No posts found.</p>
   {% endif %}
 {% endblock %}

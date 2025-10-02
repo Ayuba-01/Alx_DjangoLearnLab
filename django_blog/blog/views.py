@@ -9,10 +9,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse, reverse_lazy
 from django.contrib import messages
 
-from .models import Post, Comment
+from .models import Post, Comment, Tag
 from .forms import PostForm, CommentForm
 
 from .forms import RegisterForm, ProfileForm
+from django.db.models import Q
 class CustomLoginView(LoginView):
     template_name = "blog/login.html"            
     redirect_authenticated_user = True
@@ -159,3 +160,48 @@ class CommentDeleteView(LoginRequiredMixin, CommentAuthorOnlyMixin, DeleteView):
 
     def get_success_url(self):
         return reverse("blog:post-detail", kwargs={"pk": self.object.post_id}) + "#comments"
+
+
+class TagPostListView(ListView):
+    """List posts for a given tag slug."""
+    model = Post
+    template_name = "blog/post_list.html"
+    context_object_name = "posts"
+
+    def get_queryset(self):
+        self.tag = Tag.objects.get(slug=self.kwargs["slug"])
+        return (
+            Post.objects.select_related("author")
+            .prefetch_related("tags")
+            .filter(tags=self.tag)
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["heading"] = f"Posts tagged “{self.tag.name}”"
+        ctx["active_tag"] = self.tag
+        return ctx
+
+
+class PostSearchView(ListView):
+    """Search posts by title, content or tag name."""
+    model = Post
+    template_name = "blog/post_list.html"
+    context_object_name = "posts"
+
+    def get_queryset(self):
+        q = (self.request.GET.get("q") or "").strip()
+        qs = Post.objects.select_related("author").prefetch_related("tags")
+        if not q:
+            return qs.none()
+        return qs.filter(
+            Q(title__icontains=q)
+            | Q(content__icontains=q)
+            | Q(tags__name__icontains=q)
+        ).distinct()
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["heading"] = f"Search results for “{self.request.GET.get('q', '').strip()}”"
+        ctx["search_query"] = self.request.GET.get("q", "")
+        return ctx

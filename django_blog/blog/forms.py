@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from .models import Post, Comment, Tag
+from taggit.forms import TagField, TagWidget
 
 User = get_user_model()
 
@@ -40,12 +41,7 @@ class ProfileForm(forms.ModelForm):
         return email
 
 class PostForm(forms.ModelForm):
-    tags_csv = forms.CharField(
-        required=False,
-        label="Tags",
-        help_text="Comma-separated (e.g., django, web, tips)",
-        widget=forms.TextInput(attrs={"placeholder": "django, web, tips"})
-    )
+    tags = TagField(required=False, widget=TagWidget(), help_text="Comma-separated")
     class Meta:
         model = Post
         fields = ("title", "content", "tags_csv")

@@ -163,45 +163,32 @@ class CommentDeleteView(LoginRequiredMixin, CommentAuthorOnlyMixin, DeleteView):
 
 
 class TagPostListView(ListView):
-    """List posts for a given tag slug."""
-    model = Post
     template_name = "blog/post_list.html"
     context_object_name = "posts"
 
     def get_queryset(self):
-        self.tag = Tag.objects.get(slug=self.kwargs["slug"])
-        return (
-            Post.objects.select_related("author")
-            .prefetch_related("tags")
-            .filter(tags=self.tag)
-        )
+        self.tag = get_object_or_404(Tag, slug=self.kwargs["slug"])
+        return Post.objects.select_related("author").prefetch_related("tags").filter(tags__in=[self.tag])
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["heading"] = f"Posts tagged “{self.tag.name}”"
-        ctx["active_tag"] = self.tag
+        ctx["heading"] = f'Posts tagged “{self.tag.name}”'
         return ctx
 
-
 class PostSearchView(ListView):
-    """Search posts by title, content or tag name."""
-    model = Post
     template_name = "blog/post_list.html"
     context_object_name = "posts"
 
     def get_queryset(self):
         q = (self.request.GET.get("q") or "").strip()
-        qs = Post.objects.select_related("author").prefetch_related("tags")
         if not q:
-            return qs.none()
-        return qs.filter(
-            Q(title__icontains=q)
-            | Q(content__icontains=q)
-            | Q(tags__name__icontains=q)
-        ).distinct()
+            return Post.objects.none()
+        return (Post.objects.select_related("author").prefetch_related("tags")
+                .filter(Q(title__icontains=q) | Q(content__icontains=q) | Q(tags__name__icontains=q))
+                .distinct())
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["heading"] = f"Search results for “{self.request.GET.get('q', '').strip()}”"
-        ctx["search_query"] = self.request.GET.get("q", "")
+        ctx["heading"] = f'Search results for “{self.request.GET.get("q","").strip()}”'
+        ctx["search_query"] = self.request.GET.get("q","")
         return ctx

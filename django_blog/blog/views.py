@@ -168,7 +168,12 @@ class TagPostListView(ListView):
 
     def get_queryset(self):
         self.tag = get_object_or_404(Tag, slug=self.kwargs["slug"])
-        return Post.objects.select_related("author").prefetch_related("tags").filter(tags__in=[self.tag])
+        
+        return (
+            Post.objects.filter(tags__in=[self.tag])      
+                .select_related("author")
+                .prefetch_related("tags")
+        )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -183,9 +188,17 @@ class PostSearchView(ListView):
         q = (self.request.GET.get("q") or "").strip()
         if not q:
             return Post.objects.none()
-        return (Post.objects.select_related("author").prefetch_related("tags")
-                .filter(Q(title__icontains=q) | Q(content__icontains=q) | Q(tags__name__icontains=q))
-                .distinct())
+    
+        return (
+            Post.objects.filter(                          
+                Q(title__icontains=q) |
+                Q(content__icontains=q) |
+                Q(tags__name__icontains=q)
+            )
+            .select_related("author")
+            .prefetch_related("tags")
+            .distinct()
+        )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

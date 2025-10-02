@@ -15,7 +15,7 @@
       <div class="nav-right">
         {% if request.user.is_authenticated %}
           <span class="nav-hello">Hi, {{ request.user.username }}</span>
-          <a href="{% url 'blog:post' %}">Post</a>
+          <a href="{% url 'blog:post-list' %}">Post</a>
           <a href="{% url 'blog:profile' %}">Profile</a>
           <a href="{% url 'blog:logout' %}">Logout</a>
         {% else %}

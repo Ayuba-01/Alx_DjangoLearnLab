@@ -1,33 +1,46 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Django Blog{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+  <meta charset="utf-8">
+  <title>{% block title %}My Blog{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Provided CSS: adjust the path/name to match your file -->
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
-    <header>
-        <nav>
-            <ul>
-                <li><a href="{% url 'home' %}">Home</a></li>
-                <li><a href="{% url 'posts' %}">Blog Posts</a></li>
-                <li><a href="{% url 'login' %}">Login</a></li>
-                <li><a href="{% url 'register' %}">Register</a></li>
-            </ul>
-        </nav>
-    </header>
+  <header class="site-header">
+    <nav class="nav">
+      <a href="/">Home</a>
+      <div class="nav-right">
+        {% if request.user.is_authenticated %}
+          <span class="nav-hello">Hi, {{ request.user.username }}</span>
+          <a href="{% url 'blog:post' %}">Post</a>
+          <a href="{% url 'blog:profile' %}">Profile</a>
+          <a href="{% url 'blog:logout' %}">Logout</a>
+        {% else %}
+          <a href="{% url 'blog:login' %}">Login</a>
+          <a href="{% url 'blog:register' %}">Register</a>
+        {% endif %}
+      </div>
+    </nav>
+  </header>
 
-    <div class="content">
-        {% block content %}
-        <!-- Page-specific content goes here -->
-        {% endblock %}
+  <!-- Django messages -->
+  {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+      {% endfor %}
     </div>
+  {% endif %}
 
-    <footer>
-        <p>&copy; 2024 Django Blog</p>
-    </footer>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
 
-    <script src="{% static 'js/scripts.js' %}"></script>
+  <footer class="site-footer">
+    <small>&copy; {{ now|date:"Y" }} My Blog</small>
+  </footer>
 </body>
 </html>

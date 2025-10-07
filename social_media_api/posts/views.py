@@ -7,10 +7,7 @@ from .permissions import IsOwnerOrReadOnly
 
 class PostViewSet(viewsets.ModelViewSet):
     queryset = (
-        Post.objects
-        .select_related("author")
-        .annotate(comment_count=Count("comments"))   
-        .all()
+        Post.objects.all()
     )
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
@@ -28,7 +25,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
     def get_queryset(self):
-        qs = Comment.objects.select_related("author", "post").all()
+        qs = Comment.objects.all()
         post_id = self.request.query_params.get("post")
         return qs.filter(post_id=post_id) if post_id else qs
 

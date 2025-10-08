@@ -1,5 +1,5 @@
 # posts/views.py
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, generics
 from django.db.models import Count
 from .models import Post, Comment
 from .serializers import PostSerializer, CommentSerializer
@@ -35,3 +35,19 @@ class CommentViewSet(viewsets.ModelViewSet):
     # keep the 'post' immutable on update so users can’t move comments between posts
     def perform_update(self, serializer):
         serializer.save(post=self.get_object().post, author=self.get_object().author)
+
+
+class FeedView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    # pagination_class = DefaultPagination  # if you made one
+
+    def get_queryset(self):
+        following_qs = self.request.user.following.all().values("id")
+        return (
+            Post.objects
+                .select_related("author")
+                .annotate(comment_count=Count("comments"))
+                .filter(author__in=following_qs)
+                .order_by("-created_at")
+        )

@@ -40,14 +40,10 @@ class CommentViewSet(viewsets.ModelViewSet):
 class FeedView(generics.ListAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
-    # pagination_class = DefaultPagination  # if you made one
 
     def get_queryset(self):
-        following_qs = self.request.user.following.all().values("id")
+        following_users = self.request.user.following.all()
         return (
-            Post.objects
-                .select_related("author")
-                .annotate(comment_count=Count("comments"))
-                .filter(author__in=following_qs)
-                .order_by("-created_at")
+            Post.objects.filter(author__in=following_users).order_by("-created_at")
+            .select_related("author")
         )
